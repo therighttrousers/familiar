@@ -27,7 +27,7 @@ Later: synchronous state transformer functions (mutating a draft, with patches c
 
 ## What the runtime agent sees
 
-- **Change batches:** user changes to state, as an **array of JSON Patches** converted from Automerge patches. State only; no UI event log.
+- **Change batches:** user changes to state, as an **array of JSON Patches** converted from Automerge patches. State only; no UI event log. Automerge has no built-in converter, so the harness has its own (Spike 0: `spikes/spike0/automerge/jsonpatch.ts`, checked against 1000 randomized changes). Text edits become one whole-string `replace` per string; marks and conflicts are dropped.
 - Changes the harness applied for the runtime agent are **excluded**, identified by recording doc heads around each of its writes (G8). Otherwise it would react to its own output.
 - **No filtering.** The runtime agent filters by design, by choosing React state over Automerge state for things it doesn't need to see (see [state](state.md#data-rules)).
 
@@ -97,6 +97,5 @@ Draft them during the PoCs, against real behavior.
 ## Open questions
 
 - **Text deltas.** Automerge represents text edits as character-level splices, which don't map cleanly to JSON Patch. PoC 1 sends whole-string `replace` ops. What should replace them?
-- **Patch → JSON Patch conversion** out of the box: confirm in Spike 0.
 - **Compaction:** confirm in the PoCs that the runtime instructions really do survive Claude Code's context compaction.
 - **Guidelines:** do current models need more than the list of response options? Find out in the PoCs.

@@ -1,0 +1,3 @@
+allowBuilds:
+  # Optional native accelerator for cbor-x; the JS fallback is fine.
+  cbor-extract: false

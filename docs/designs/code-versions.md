@@ -8,7 +8,7 @@ Relevant decision records:
 - The runtime agent edits applet source in **`work/`**, a git repo in the runtime agent container.
 - Each publish produces an **immutable build** in `dist/v{n}/`. Nothing is edited in place and nothing is hot-reloaded.
 - The control doc's pointer names the **active version** by an **opaque version ID** (`v{n}`), not a directory. The loader resolves "version ID → entry URL" and imports the entry. In dev, that's `/v{n}/main.js` from `dist/v{n}/` on the runtime agent container's static server; in the cloud, a bundle URL (see [roadmap](roadmap.md#deployment-contexts)).
-- A **static server in the runtime agent container** serves `dist/` and the loader. There is no Vite dev server and no HMR in the applet path, so correctness never depends on HMR or Fast Refresh.
+- A **static server in the runtime agent container** serves `dist/` and the loader. There is no Vite dev server and no HMR in the applet path, so correctness never depends on HMR. The loader uses React Refresh's runtime only to keep UI state across activations (see [loader](#preserving-ui-state-across-activations)); if that fails, the cost is a remount, not wrong behavior.
 - Each version declares which schema version it reads. Code versions without a schema change share a state doc.
 - Revert can go back **any number of versions**.
 
@@ -34,8 +34,18 @@ A small **protected** loader runs in the applet iframe.
 
 - It receives the pointer from the parent page via `postMessage` and follows it.
 - It owns the React root and renders the version's `Applet`.
-- An **import map** maps `react`, `react-dom` and `@harness/state` to single shared copies. Applet builds mark them external, so every version shares one React and hooks keep working.
-- **Readiness:** when a version is activated, it keeps rendering the old version until automerge-repo reports the new state doc ready (`whenReady()`), then imports the new version's entry and switches. This is needed because Automerge doesn't order writes across docs, and the pointer travels separately by `postMessage`.
+- An **import map** maps `react`, `react/jsx-runtime`, `react-dom/client` and `@harness/state` to single shared copies. Applet builds mark them external, so every version shares one React and hooks keep working (confirmed in Spike 0). React ships only CommonJS, so the shared copies are ESM wrappers built with explicit named exports, bundled together so React exists once.
+- **Readiness:** when a version is activated, it keeps rendering the old version until automerge-repo reports the new state doc ready, then imports the new version's entry and switches. This is needed because Automerge doesn't order writes across docs, and the pointer travels separately by `postMessage`. In automerge-repo 2.x, `repo.find()` resolves once the handle is ready. In Spike 0 it always resolved with the complete doc (identical heads) for a doc created on another peer, including through two hops (server → UI → iframe). The source says it has no `whenSynced()`, and a doc already stored locally counts as ready before syncing, but the loader never has the new doc locally.
+
+### Preserving UI state across activations
+
+The loader uses **React Refresh** (the runtime behind Fast Refresh, without HMR), so activating a version keeps React state and the DOM: half-typed input, focus, selection, scroll, and uncontrolled values (G1). Without it, every component in the new version is a new type, so React remounts the whole tree. That includes a stable wrapper that calls `Applet()` as a function: only `Applet`'s own hooks survive. Spike 0 measured all three approaches. (000 §4.2)
+
+- **Build:** the protected `vite.config.ts` runs `react-refresh/babel` on applet modules. Components register under IDs of the form "path relative to `work/` + component name", which are the same in every version. Each version builds to a single bundled file.
+- **Loader:** injects the Refresh runtime into React's global hook **before React DOM loads**. On activation it imports the version's entry, renders its `Applet`, and calls `performReactRefresh()`.
+- **Fresh module instance per activation** (e.g. `main.js?activation=N`). Refresh ignores types it has already seen, and an ES module evaluates only once, so re-activating an already-imported version (e.g. Revert) would otherwise leave the newer code on screen. This is why a version must be a single file: shared chunks would be reused.
+- **Development builds of React**, because production React has no hot-reload hooks. Acceptable under N4.
+- A component whose hooks changed between versions remounts. That's Refresh's rule, and it's correct.
 
 Post-MVP: a richer loader, e.g. an error boundary that notifies the runtime agent and triggers rollback.
 
@@ -60,5 +70,3 @@ Post-MVP: automatic rollback triggered by the loader's error boundary.
 ## Open questions
 
 - **How a version declares its schema version** (000 §4.1 says it does, not how). The runtime agent's input (`schema="3"`) and the event log assume a schema number.
-- **Remounting on activation (000 §4.2, Spike 0).** `v7/Applet` and `v8/Applet` are different component types, so React will likely remount the whole tree on activation. That would lose React state and recreate the DOM (focus, half-typed input, scroll, selection). Plan: spike it first, with no workarounds unless the spike says we need them. The known fix is the original project's approach: a stable wrapper component type that renders the loaded code, in the loader.
-- **Import map (Spike 0):** confirm that one React is shared across separately built versions.

@@ -27,9 +27,9 @@ The user asked the agent to work with minimal involvement: the agent makes imple
 
 - [x] **2.1 How far this run goes** — Decision: PoC 1 end to end: workspace, harness, harness UI, runner in its container, the initial applet, translation working, with tests and a PR (not merged).
 
-- [~] **2.2 Move chat to PoC 2?** — The user suggested it, to shrink PoC 1. PoC 1's scenario (translation as the user types) doesn't need chat.
+- [x] **2.2 Move chat to PoC 2?** — The user suggested it, to shrink PoC 1. PoC 1's scenario (translation as the user types) doesn't need chat.
   - Saves: the chat pane with streaming, the chat path over the JSON websocket, chat flushing a batch, and `<chat>` encoding.
   - Loses: the user can't steer the runtime agent mid-session; the chat flush goes untested until PoC 2.
   - PoC 1's open questions don't need chat: change batches arriving mid-turn exercise Claude Code's queueing just as well.
   - The runtime agent's text output still matters (does it chat instead of patching? does it reply at all?), and the JSON Lines event log shows it.
-  - Leaning (agent's recommendation, awaiting the user): **move chat input and streaming to PoC 2**, and watch the runtime agent's text in the event log. Keep the `<chat>` encoding in the design, unused in PoC 1.
+  - Decision: **move chat input and streaming to PoC 2**, and watch the runtime agent's text in the event log. Keep the `<chat>` encoding in the design, unused in PoC 1. To steer the runtime agent, restart with different scenario instructions.

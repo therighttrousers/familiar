@@ -33,9 +33,9 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 - **Runner:** Agent SDK streaming input. Tools: `get_state`, `patch_state`.
 - **Harness:**
   - automerge-repo with **a single state doc** (no control doc), iframe sync through the parent
-  - batching (1.5 s / 5 s / chat flush), message encoding, excluding the runtime agent's own changes from batches
+  - batching (1.5 s / 5 s), message encoding, excluding the runtime agent's own changes from batches
   - JSON Lines log, per-session objects
-- **Harness UI:** chat pane (streaming), toolbar with Send, basic status, iframe on a separate origin.
+- **Harness UI:** basic status, iframe on a separate origin. No chat: the runtime agent's text goes to the event log (001 §2.2).
 - **`applet-runtime`:** a trivial loader (renders the one applet), `@harness/state`.
 - **Initial applet** (hand-written): the translation UI and its `State`. Tailwind and shadcn preinstalled.
 - **Runtime instructions:** a first draft, plus scenario instructions.
@@ -43,13 +43,14 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 - **Text deltas:** whole-string `replace` ops.
 - Starts from scratch each run.
 
-**Out of scope:** publish, migrate, the `tsc` gate, multiple versions, the control doc, the readiness wait.
+**Out of scope:** chat, publish, migrate, the `tsc` gate, multiple versions, the control doc, the readiness wait.
 
 ### PoC 2: spreadsheet
 
 **Scenario:** "I need a spreadsheet" → a grid → the user types `=A1+1` → the runtime agent sees the change → adds a formula engine → the cell shows a number. This exercises the **rewrite loop**: chat → publish, change batches → publish, and **migration**. The first real applet migrates away from the bootstrap applet's `State`; the formula engine may migrate again.
 
 **Adds:**
+- Chat: the chat pane (streaming), toolbar with Send, chat flushing pending changes, `<chat>` encoding.
 - The control doc and pointer.
 - Publishing `work/` → `dist/v{n}/`, with the `tsc` gate, `migrate.ts` run in the container and archived, and a commit of `work/` on each publish. Tool: `publish_applet`.
 - A state doc per schema version, and the readiness wait.

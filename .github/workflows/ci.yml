@@ -23,12 +23,26 @@ jobs:
           args: --offline --include-fragments --no-progress './**/*.md'
           fail: true
 
+  # Lint (Biome), typecheck and unit tests for the pnpm workspace.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install -g pnpm@12.6.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+
   # The required check. `always()` makes it report even when a needed job fails;
   # otherwise it would be skipped, and a skipped required check counts as passing.
   # Skipped needed jobs count as OK, so jobs may have their own conditions.
   ci-ok:
     if: always()
-    needs: [docs-links]
+    needs: [docs-links, check]
     runs-on: ubuntu-latest
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')

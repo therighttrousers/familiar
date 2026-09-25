@@ -2,6 +2,7 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.4, §2.1–2.4, §3.4a, §4.5
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §3.4–3.6
 
 ## Store
 
@@ -19,7 +20,7 @@ Post-MVP: an **index doc** listing apps, for multiple apps (see [ux](ux.md#sessi
 Who can reach what:
 
 - The **harness UI** is an automerge-repo peer of the harness server and syncs the control doc and state docs.
-- The **applet iframe syncs only the active state doc**, through the parent page (automerge-repo MessageChannel adapter). It holds no credentials. The parent's repo enforces this with `shareConfig`: `access` grants the iframe's peer only the active state doc, and `announce` announces nothing to it. A request for any other doc comes back "unavailable", even if only the harness server has it. On activation the parent calls `shareConfigChanged()`, which stops the old doc syncing to the iframe. Doc IDs are also unguessable, and the iframe is told only its own. (Checked in Spike 0.)
+- The **applet iframe syncs only the active state doc**, through the parent page (automerge-repo MessageChannel adapter). It holds no credentials. The parent's repo enforces this with `shareConfig`, **default deny**: peers choose their own IDs, so the harness UI trusts only the harness server's random peer ID, which only it learns. Every other peer, including the iframe, gets `access` to the active state doc only, and `announce` announces nothing to it (001 §3.5). A request for any other doc comes back "unavailable", even if only the harness server has it. On activation the parent calls `shareConfigChanged()`, which stops the old doc syncing to the iframe. Doc IDs are also unguessable, and the iframe is told only its own. (Checked in Spike 0.)
 - The **loader** gets the pointer read-only from the parent via `postMessage`.
 - Two channels connect the harness UI and the harness server: an **automerge-repo websocket** for doc sync, and a **JSON websocket** for chat and runtime agent events (streaming text, status, publish results).
 - The **runtime agent** never syncs any doc. It reads and writes state through harness RPC tools (see [runtime agent](runtime-agent.md#tools)), and indirectly through the applet code it writes.
@@ -46,8 +47,9 @@ A protected module `@harness/state` exports a Zustand-like **`store`**:
 
 - `store.use(): State`: React hook returning the current state.
 - `store.change(draft => { ... })`: an Automerge change function.
+- `updateText(draft, path, value)`: sets a string by diffing, so concurrent edits to it merge. Assigning a string creates a new text object and discards concurrent edits, including the runtime agent's. The runtime instructions must tell the runtime agent to use it (001 §3.4).
 
-It is a thin wrapper over the active state doc's automerge-repo handle. The applet never sees schema versions, heads or the control doc. (000 §4.5)
+`use` and `change` take the state type as a type parameter (`store.use<State>()`), since the protected module can't import the applet's `schema.ts`. It is a thin wrapper over the active state doc's automerge-repo handle. The applet never sees schema versions, heads or the control doc. (000 §4.5)
 
 Post-MVP: selectors, e.g. `store.use(s => s.board)`.
 

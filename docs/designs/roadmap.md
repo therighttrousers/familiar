@@ -2,11 +2,13 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.1, §1.5, §7.1–7.4
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md)
 
 ## Now
 
-- **Spike 0** is on branch `spike0` (code in `spikes/spike0/`). Done; the results are in the design docs.
-- **Next:** PoC 1.
+- **Spike 0** is done (code in `spikes/spike0/`); the results are in the design docs.
+- **PoC 1** works end to end on branch `poc1`, awaiting review. Implementation decisions and findings are in [001](../decision-records/001-poc1-implementation.md).
+- **Next:** PoC 2.
 
 Keep this section short and current: it tells a new session what to work on.
 
@@ -28,13 +30,13 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 **Scenario:** the initial applet is side-by-side multiline inputs labeled English and Spanish. The runtime agent is instructed to update the opposite side as the user types. This exercises the **observe → act loop** (change batches → `patch_state`) and the runtime agent's presence, with no code changes.
 
 **In scope:**
-- **Deployment:** harness on the host. Runtime agent container on a normal network, API key in its env (an accepted, known gap), non-root. It serves the fixed initial applet as a static build (`vite build` once, static server); the browser reaches it directly.
+- **Deployment:** harness on the host. Runtime agent container on a normal network, subscription OAuth token in its env (an accepted, known gap; see [security](security.md#credential)), non-root. It serves the fixed initial applet as a static build (`vite build` once, static server); the browser reaches it directly.
 - **Runner:** Agent SDK streaming input. Tools: `get_state`, `patch_state`.
 - **Harness:**
   - automerge-repo with **a single state doc** (no control doc), iframe sync through the parent
-  - batching (1.5 s / 5 s / chat flush), message encoding, excluding the runtime agent's own changes from batches
+  - batching (1.5 s / 5 s), message encoding, excluding the runtime agent's own changes from batches
   - JSON Lines log, per-session objects
-- **Harness UI:** chat pane (streaming), toolbar with Send, basic status, iframe on a separate origin.
+- **Harness UI:** basic status, iframe on a separate origin. No chat: the runtime agent's text goes to the event log (001 §2.2).
 - **`applet-runtime`:** a trivial loader (renders the one applet), `@harness/state`.
 - **Initial applet** (hand-written): the translation UI and its `State`. Tailwind and shadcn preinstalled.
 - **Runtime instructions:** a first draft, plus scenario instructions.
@@ -42,13 +44,14 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 - **Text deltas:** whole-string `replace` ops.
 - Starts from scratch each run.
 
-**Out of scope:** publish, migrate, the `tsc` gate, multiple versions, the control doc, the readiness wait.
+**Out of scope:** chat, publish, migrate, the `tsc` gate, multiple versions, the control doc, the readiness wait.
 
 ### PoC 2: spreadsheet
 
 **Scenario:** "I need a spreadsheet" → a grid → the user types `=A1+1` → the runtime agent sees the change → adds a formula engine → the cell shows a number. This exercises the **rewrite loop**: chat → publish, change batches → publish, and **migration**. The first real applet migrates away from the bootstrap applet's `State`; the formula engine may migrate again.
 
 **Adds:**
+- Chat: the chat pane (streaming), toolbar with Send, chat flushing pending changes, `<chat>` encoding.
 - The control doc and pointer.
 - Publishing `work/` → `dist/v{n}/`, with the `tsc` gate, `migrate.ts` run in the container and archived, and a commit of `work/` on each publish. Tool: `publish_applet`.
 - A state doc per schema version, and the readiness wait.
@@ -60,7 +63,7 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 **Scenario:** PoC 2, plus **chess**. Chess exercises the runtime agent *acting* via `patch_state` in response to user moves, and staying present. Stretch: one more "intelligence inside the applet" demo from the [vision](high-level-design.md#vision), e.g. shopping-list allergens or interactive fiction.
 
 **Adds:**
-- **Deployment:** containerized harness (Docker Compose), internal network, API key proxy, applet server reverse-proxied through the harness.
+- **Deployment:** containerized harness (Docker Compose), internal network, Anthropic API proxy, applet server reverse-proxied through the harness.
 - **Security:** full container hardening, the `PreToolUse` hook, the iframe `sandbox` attribute and CSP.
 - **UI:** collapsible, responsive chat pane; hamburger menu.
 - **Persistence:** resume across restarts (volume, SDK session resume, harness storage).
@@ -70,7 +73,7 @@ Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the l
 
 ## Deferred (post-MVP)
 
-Voice chat; `store` selectors; a richer loader with an error boundary that notifies the runtime agent and rolls back automatically; diffs and previews; undo/replay; multiple apps; npm egress; applet network access; model routing; the serve-container split; asking before big changes; `flush()` for applets; state transformers; a third kind of state, hidden from the runtime agent; prompt-injection defenses; a read-only root filesystem for the runtime agent container; minimal-diff migrations; re-running migrations or replaying edits lost to them.
+Voice chat; `store` selectors; a richer loader with an error boundary that notifies the runtime agent and rolls back automatically; diffs and previews; undo/replay; multiple apps; npm egress; applet network access; model routing; the serve-container split; asking before big changes; `flush()` for applets; state transformers; a third kind of state, hidden from the runtime agent; prompt-injection defenses; a read-only root filesystem for the runtime agent container; minimal-diff migrations; re-running migrations or replaying edits lost to them; API key auth.
 
 ## Deployment contexts
 
@@ -85,12 +88,10 @@ Familiar has two imagined deployment contexts. We check that no decision prevent
 
 Design choices that keep the cloud possible: opaque code version IDs, a disposable runtime agent container, per-session harness objects, no credentials in the iframe, no browser storage in applets, and no reliance on HMR.
 
-Productization-only (not blocking): auth and tenancy, per-user keys and metering, sandbox runtime choice, egress policy as network policy.
+Productization-only (not blocking): API key auth (see [security](security.md#credential)), auth and tenancy, per-user keys and metering, sandbox runtime choice, egress policy as network policy.
 
 ## Open questions
 
-What PoC 1 should tell us (raised in the design meeting, not recorded in 000):
+What PoC 1 should tell us (raised in the design meeting, not recorded in 000). PoC 1 answered the first two (001 §4): excluding the runtime agent's own changes works, and input arriving mid-turn queues into its next turn.
 
-- Does excluding the runtime agent's own changes stop it reacting to its own output?
-- How well does Claude Code's queueing handle input arriving mid-turn?
-- Is translation lag (1.5 s idle plus an Opus turn) acceptable?
+- Is translation lag acceptable? Measured on Sonnet 5: about 3 s from the last keystroke (1.5 s idle, then 1.2–1.4 s until the patch lands). Opus will be slower.

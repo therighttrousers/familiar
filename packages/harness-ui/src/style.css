@@ -1,0 +1,87 @@
+:root {
+  --bg: #fafafa;
+  --fg: #171717;
+  --muted: #737373;
+  --line: #e5e5e5;
+  --accent: #2563eb;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171717;
+    --fg: #fafafa;
+    --muted: #a3a3a3;
+    --line: #333;
+    --accent: #60a5fa;
+  }
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.message {
+  padding: 2rem;
+  color: var(--muted);
+}
+
+.applet {
+  flex: 1;
+  border: 0;
+  background: white;
+}
+
+/* Activity feedback (docs/designs/ux.md#activity-feedback): solid while working, dots while batching. */
+.status {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.status .bar {
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 3px;
+}
+
+.status-working .bar {
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.status-batching .bar {
+  background: radial-gradient(circle, var(--accent) 1.5px, transparent 2px) 0 0 / 10px 3px repeat-x;
+}
+
+.status-disconnected,
+.status-offline {
+  color: var(--muted);
+}
+
+.status .turn {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}

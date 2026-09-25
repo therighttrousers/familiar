@@ -1,0 +1,35 @@
+name: CI
+
+# All CI jobs live in this one workflow. The branch ruleset requires only the
+# `ci-ok` job, so adding a job means adding it to `ci-ok`'s `needs`, with no
+# ruleset change.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Checks that relative links and heading anchors in Markdown files resolve.
+  # External URLs are skipped (--offline).
+  docs-links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          args: --offline --include-fragments --no-progress './**/*.md'
+          fail: true
+
+  # The required check. `always()` makes it report even when a needed job fails;
+  # otherwise it would be skipped, and a skipped required check counts as passing.
+  # Skipped needed jobs count as OK, so jobs may have their own conditions.
+  ci-ok:
+    if: always()
+    needs: [docs-links]
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

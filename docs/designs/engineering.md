@@ -23,6 +23,12 @@ A **pnpm workspace**:
 
 TypeScript (strict), **Biome** (lint and format), **Vitest**.
 
+## CI
+
+GitHub Actions, in **one workflow**: `.github/workflows/ci.yml`. `main` accepts changes only through PRs, and its ruleset requires a single check, the **`ci-ok`** gate job, which fails if any other job failed. **When you add a CI job, add it to `ci-ok`'s `needs`**; the ruleset never changes. `needs` can't reach other workflows, so jobs go in `ci.yml`.
+
+Current jobs: `docs-links` (relative links and heading anchors in all Markdown files).
+
 ## Harness structure
 
 **Harness state is per-session objects keyed by session ID:** batch timers, delivered heads (see [state](state.md#applying-the-runtime-agents-patches)), queues, the runner connection. No process-global singletons, so sessions can later be spread across servers (see [roadmap](roadmap.md#deployment-contexts)).

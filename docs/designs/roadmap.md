@@ -7,7 +7,8 @@ Relevant decision records:
 ## Now
 
 - **Spike 0** is done (code in `spikes/spike0/`); the results are in the design docs.
-- **PoC 1** is in progress on branch `poc1`. Implementation decisions are in [001](../decision-records/001-poc1-implementation.md).
+- **PoC 1** works end to end on branch `poc1`, awaiting review. Implementation decisions and findings are in [001](../decision-records/001-poc1-implementation.md).
+- **Next:** PoC 2.
 
 Keep this section short and current: it tells a new session what to work on.
 
@@ -91,8 +92,6 @@ Productization-only (not blocking): API key auth (see [security](security.md#cre
 
 ## Open questions
 
-What PoC 1 should tell us (raised in the design meeting, not recorded in 000):
+What PoC 1 should tell us (raised in the design meeting, not recorded in 000). PoC 1 answered the first two (001 §4): excluding the runtime agent's own changes works, and input arriving mid-turn queues into its next turn.
 
-- Does excluding the runtime agent's own changes stop it reacting to its own output?
-- How well does Claude Code's queueing handle input arriving mid-turn?
-- Is translation lag (1.5 s idle plus a runtime agent turn; measured on the testing model, so optimistic for Opus) acceptable?
+- Is translation lag acceptable? Measured on Sonnet 5: about 3 s from the last keystroke (1.5 s idle, then 1.2–1.4 s until the patch lands). Opus will be slower.

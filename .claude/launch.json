@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "familiar",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "port": 5173
+    },
+    {
       "name": "spike0-loader",
       "runtimeExecutable": "node",
       "runtimeArgs": ["spikes/spike0/loader/serve.mjs"],

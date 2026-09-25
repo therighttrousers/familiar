@@ -2,6 +2,7 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.5, §3.7, §8.1–8.3
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §3.1, §3.10
 
 ## Repo layout
 
@@ -14,20 +15,23 @@ A **pnpm workspace**:
 | `harness-ui` | chat, toolbar, iframe host (trusted, so Vite is fine here) | browser |
 | `runner` | Agent SDK driver and runtime tools | runtime agent container |
 | `applet-runtime` | the loader and `@harness/state` (copied in read-only) | applet iframe |
-| `bootstrap-applet` | the near-blank starting applet | runtime agent container (`dist/v0/`) |
-| `docker/runtime-agent/` | Dockerfile, preinstalled packages, CLAUDE.md | — |
+| `bootstrap-applet` | the near-blank starting applet (from PoC 2) | runtime agent container (`dist/v0/`) |
+| `translation-applet` | PoC 1's initial applet, laid out as in `work/`, with `initial-state.json` | runtime agent container |
+| `docker/runtime-agent/` | Dockerfile, preinstalled packages, CLAUDE.md, scenario instructions | — |
 
 **Spikes** live in `spikes/<name>/` (e.g. `spikes/spike0/`), outside the workspace, each with its own `package.json` and a README saying how to run it. They are throwaway: committed so findings can be reproduced, and deleted once real code supersedes them. Findings go into the design docs, not the spike.
 
 ## Tooling
 
-TypeScript (strict), **Biome** (lint and format), **Vitest**.
+TypeScript (strict), **Biome** (lint and format), **Vitest**. Node runs the TypeScript directly (type stripping), so there's no build step outside Vite. Files use LF line endings (`.gitattributes`).
+
+How to run Familiar is in the [README](../../README.md).
 
 ## CI
 
 GitHub Actions, in **one workflow**: `.github/workflows/ci.yml`. `main` accepts changes only through PRs, and its ruleset requires a single check, the **`ci-ok`** gate job, which fails if any other job failed. **When you add a CI job, add it to `ci-ok`'s `needs`**; the ruleset never changes. `needs` can't reach other workflows, so jobs go in `ci.yml`.
 
-Current jobs: `docs-links` (relative links and heading anchors in all Markdown files).
+Current jobs: `docs-links` (relative links and heading anchors in all Markdown files) and `check` (`pnpm lint`, `pnpm typecheck`, `pnpm test`).
 
 ## Harness structure
 

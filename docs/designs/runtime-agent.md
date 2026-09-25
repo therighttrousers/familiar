@@ -2,14 +2,14 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.2, §3.1–3.7, §6.6, §8.4
-- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.2
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.2, §3.8, §3.9, §4
 
 The runtime agent is a Claude Code agent running in the runtime agent container. It rewrites the applet, and it acts inside the applet on the user's behalf.
 
 ## Runner
 
 - A **runner** process in the runtime agent container drives the Agent SDK's `query()` with **streaming input**. The session is long-lived.
-- The runner hosts the runtime tools as in-process MCP tools. They call a **narrow RPC** on the harness server. The harness performs every Automerge write on the runtime agent's behalf.
+- The runner hosts the runtime tools as in-process MCP tools, loaded eagerly (`alwaysLoad`): by default Claude Code defers MCP tools behind its ToolSearch tool, which costs a model round trip (001 §3.9). They call a **narrow RPC** on the harness server. The harness performs every Automerge write on the runtime agent's behalf.
 - The runner is **not** an automerge-repo peer.
 - The runner is **untrusted**: the runtime agent can edit or kill it. The harness validates everything it receives.
 - Everything arriving through the RPC is attributed to the runtime agent (G8).
@@ -99,4 +99,4 @@ Draft them during the PoCs, against real behavior.
 
 - **Text deltas.** Automerge represents text edits as character-level splices, which don't map cleanly to JSON Patch. PoC 1 sends whole-string `replace` ops. What should replace them?
 - **Compaction:** confirm in the PoCs that the runtime instructions really do survive Claude Code's context compaction.
-- **Guidelines:** do current models need more than the list of response options? Find out in the PoCs.
+- **Guidelines:** do current models need more than the list of response options? Find out in the PoCs. In PoC 1, Sonnet 5 chose well, but ended every turn with "Done." despite instructions not to (001 §4).

@@ -61,7 +61,8 @@ function rpc(call: RpcCall): Promise<Json> {
 async function toolResult(call: RpcCall) {
   try {
     const result = await rpc(call);
-    return { content: [{ type: "text" as const, text: typeof result === "string" ? result : JSON.stringify(result) }] };
+    const text = typeof result === "string" ? result : JSON.stringify(result);
+    return { content: [{ type: "text" as const, text }] };
   } catch (e) {
     return { content: [{ type: "text" as const, text: e instanceof Error ? e.message : String(e) }], isError: true };
   }
@@ -70,6 +71,8 @@ async function toolResult(call: RpcCall) {
 const familiar = createSdkMcpServer({
   name: "familiar",
   version: "0.1.0",
+  // Otherwise Claude Code defers the tools behind ToolSearch, costing a model round trip per session.
+  alwaysLoad: true,
   tools: [
     tool("get_state", "Returns the applet's current state as JSON.", {}, () => toolResult({ method: "get_state" })),
     tool(

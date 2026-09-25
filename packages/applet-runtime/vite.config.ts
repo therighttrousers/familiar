@@ -19,6 +19,16 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
-  build: { outDir: "dist", emptyOutDir: true, target: "esnext" },
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+    target: "esnext",
+    rollupOptions: {
+      // Radix's "use client" directives are for server components; irrelevant here.
+      onwarn(warning, warn) {
+        if (warning.code !== "MODULE_LEVEL_DIRECTIVE") warn(warning);
+      },
+    },
+  },
   server: { port: 5174, strictPort: true },
 });

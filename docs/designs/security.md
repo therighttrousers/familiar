@@ -2,7 +2,7 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.1, §1.3, §1.4, §5.1–5.7
-- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.1
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.1, §3.5, §3.7
 
 ## Trust boundaries
 
@@ -40,6 +40,7 @@ Later: a read-only root filesystem.
 The credential is the user's **Claude subscription OAuth token**, minted by `claude setup-token` and read by Claude Code from `CLAUDE_CODE_OAUTH_TOKEN`. In development it lives in a git-ignored `.env` at the repo root. It is the only auth path; API key auth is deferred (see [roadmap](roadmap.md#deferred-post-mvp)). Anthropic doesn't allow claude.ai login to be offered to other users, so anything offered to others needs API key auth (001 §1.1).
 
 In the PoCs the token is in the runtime agent container's env, an accepted gap.
+- The runner connects to the harness's runner websocket with a random token the harness gives the container.
 - The harness reverse-proxies the runtime agent container's static applet server on a separate port. That gives the iframe its own origin.
 
 ### Egress

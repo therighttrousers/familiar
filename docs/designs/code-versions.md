@@ -34,16 +34,22 @@ A small **protected** loader runs in the applet iframe.
 
 - It receives the pointer from the parent page via `postMessage` and follows it.
 - It owns the React root and renders the version's `Applet`.
-- An **import map** maps `react`, `react/jsx-runtime`, `react-dom/client` and `@harness/state` to single shared copies. Applet builds mark them external, so every version shares one React and hooks keep working (confirmed in Spike 0). React ships only CommonJS, so the shared copies are ESM wrappers built with explicit named exports, bundled together so React exists once.
+- **Every preinstalled package is external.** They're built once into shared vendor ES modules, and an **import map** maps each import specifier (including subpaths such as `react/jsx-runtime`) to them. Applet builds mark them all external, so every version shares one instance of each package:
+  - One React, so hooks keep working (confirmed in Spike 0).
+  - Library components (e.g. Radix primitives under shadcn) are the same types in every version. React Refresh only refreshes transformed applet code, so a bundled per-version copy of a library would remount everything beneath it on activation. (Not measured, but it follows from how Refresh matches types.)
+  - Vendor modules are built together, so shared dependencies exist once. CommonJS packages (e.g. React) get ESM wrappers with named exports found at build time.
+  - The import map is fixed once the iframe loads modules, so the package set can't change without reloading the iframe. The MVP package set never changes.
 - **Readiness:** when a version is activated, it keeps rendering the old version until automerge-repo reports the new state doc ready, then imports the new version's entry and switches. This is needed because Automerge doesn't order writes across docs, and the pointer travels separately by `postMessage`. In automerge-repo 2.x, `repo.find()` resolves once the handle is ready. In Spike 0 it always resolved with the complete doc (identical heads) for a doc created on another peer, including through two hops (server → UI → iframe). The source says it has no `whenSynced()`, and a doc already stored locally counts as ready before syncing, but the loader never has the new doc locally.
 
 ### Preserving UI state across activations
 
 The loader uses **React Refresh** (the runtime behind Fast Refresh, without HMR), so activating a version keeps React state and the DOM: half-typed input, focus, selection, scroll, and uncontrolled values (G1). Without it, every component in the new version is a new type, so React remounts the whole tree. That includes a stable wrapper that calls `Applet()` as a function: only `Applet`'s own hooks survive. Spike 0 measured all three approaches. (000 §4.2)
 
-- **Build:** the protected `vite.config.ts` runs `react-refresh/babel` on applet modules. Components register under IDs of the form "path relative to `work/` + component name", which are the same in every version. Each version builds to a single bundled file.
+- **Build:** the protected `vite.config.ts` runs `react-refresh/babel` on applet modules. Components register under IDs of the form "path relative to `work/` + component name", which are the same in every version. Each version builds to a single bundled file (see below).
 - **Loader:** injects the Refresh runtime into React's global hook **before React DOM loads**. On activation it imports the version's entry, renders its `Applet`, and calls `performReactRefresh()`.
-- **Fresh module instance per activation** (e.g. `main.js?activation=N`). Refresh ignores types it has already seen, and an ES module evaluates only once, so re-activating an already-imported version (e.g. Revert) would otherwise leave the newer code on screen. This is why a version must be a single file: shared chunks would be reused.
+- **Fresh module instances per activation.** Refresh ignores types it has already seen, and an ES module evaluates only once per URL, so re-activating an already-imported version (e.g. Revert) would otherwise leave the newer code on screen. So each activation must load **all** of the version's modules from URLs no earlier activation used.
+  - With a single bundled file (the MVP), a query string on the entry does it: `main.js?activation=N`.
+  - An unbundled build would need the uniqueness in the path, e.g. the static server serving `dist/v{n}/` under `/act/N/v{n}/`. Relative imports keep the path but drop the query, so a query on the entry alone would reuse the other modules.
 - **Development builds of React**, because production React has no hot-reload hooks. Acceptable under N4.
 - A component whose hooks changed between versions remounts. That's Refresh's rule, and it's correct.
 
@@ -63,10 +69,12 @@ Post-MVP: automatic rollback triggered by the loader's error boundary.
 - **State:** `@harness/state`'s `store` (see [state](state.md#in-applet-store-api)). `State` is defined in `schema.ts`.
 - **Styling:** Tailwind v4, via the Vite plugin in the protected config.
 - **Components:** shadcn/ui, generated into `work/components/ui/` at bootstrap. It is light, Tailwind-native, and lives as source the runtime agent can modify. (The original project found a component library cheap and valuable; MUI was too heavy.)
-- **Preinstalled packages:** React, React DOM, Tailwind, shadcn's dependencies (Radix, `lucide-react`), `@harness/state`. **No domain libraries** (e.g. no `chess.js`): the runtime agent builds the smarts itself. There is no `npm install` in the MVP (see [security](security.md#egress)).
+- **Preinstalled packages:** React, React DOM, Tailwind, shadcn's dependencies (Radix, `lucide-react`), `@harness/state`. All are external to applet builds (see [loader](#loader)). **No domain libraries** (e.g. no `chess.js`): the runtime agent builds the smarts itself. There is no `npm install` in the MVP (see [security](security.md#egress)).
 - **Protected files** (root-owned, read-only to the runtime agent): `vite.config.ts`, the loader, `@harness/state`.
 - **Bootstrap applet:** a near-blank canvas with a short, friendly, centered label saying what to do, published as `dist/v0/` (see [ux](ux.md#layout)).
 
 ## Open questions
 
 - **How a version declares its schema version** (000 §4.1 says it does, not how). The runtime agent's input (`schema="3"`) and the event log assume a schema number.
+- **Changing the package set** (post-MVP, with `npm install`): the import map can't change after the iframe loads modules, so a version with different packages needs an iframe reload, which loses UI state (G1). Browsers can add new specifiers to an import map, but not remap existing ones. Options include activating such versions with a visible reload, or content-hashed vendor URLs so added packages don't collide.
+- **Radix remounts (PoC 2):** confirm that external Radix components keep their state across activations. Spike 0 didn't include a library component.

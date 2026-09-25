@@ -45,7 +45,7 @@ Later (e.g. `npm install`): an **egress proxy service** (e.g. Squid) on both net
 
 - `sandbox="allow-scripts allow-same-origin allow-forms"`. This is safe **only because** the applet's origin (a separate port) differs from the harness's. It must stay that way.
 - CSP `connect-src 'self'`: **no network access for applets**. The applet talks only to its own static server, and to the parent via `postMessage`.
-- The iframe holds no credentials, and syncs only the active state doc through the parent (see [state](state.md#documents)).
+- The iframe holds no credentials, and syncs only the active state doc through the parent. The parent's `shareConfig` enforces this; it doesn't rely only on unguessable IDs (see [state](state.md#documents)).
 - **Enforce at the channel.** Code in one JS realm can't be reliably locked down, so in-iframe APIs are conveniences. The iframe's power is whatever the parent grants over the port.
 
 Post-MVP: applet network access through a harness-controlled proxy, with an allowlist the user manages in harness settings.
@@ -71,4 +71,3 @@ Revisit when either of these lands: applet network access, npm egress.
 ## Open questions
 
 - **Is chat more authoritative than in-applet text?** In the original project, text typed into applet text boxes and addressed to the runtime agent was treated like chat, and that worked well. Revisit with prompt injection.
-- **Share policy** (Spike 0): see [state](state.md#open-questions).

@@ -3,6 +3,13 @@
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.1, §1.5, §7.1–7.4
 
+## Now
+
+- **Spike 0** is on branch `spike0` (code in `spikes/spike0/`). Done; the results are in the design docs.
+- **Next:** PoC 1.
+
+Keep this section short and current: it tells a new session what to work on.
+
 ## Milestones
 
 **Spike 0 → PoC 1 (translation) → PoC 2 (spreadsheet) → MVP.** Spike 0 is needed only before PoC 2, so it and PoC 1 can happen in either order.
@@ -11,10 +18,10 @@ Throughout: **one user, one browser tab, localhost.** Multi-tab stays *possible*
 
 ### Spike 0 (throwaway code)
 
-Answers open questions for PoC 2 and the MVP:
+Answers open questions for PoC 2 and the MVP. **Done**; the answers are in the linked docs.
 
-- The loader switches between two built versions as each is activated (`dist/v1/`, `dist/v2/`) with an input mid-edit and a scrolled list. Does React remount? Does the import map share one React across versions? (See [code versions](code-versions.md#open-questions).)
-- Automerge checks: `changeAt` at old heads, Automerge patch → JSON Patch conversion, `whenReady()` on a newly created doc, and whether automerge-repo can refuse a peer's request for an unoffered doc ID. (See [state](state.md#open-questions).)
+- The loader switches between two built versions as each is activated (`dist/v1/`, `dist/v2/`) with an input mid-edit and a scrolled list. Does React remount? Does the import map share one React across versions? (See [code versions](code-versions.md#loader).)
+- Automerge checks: `changeAt` at old heads, Automerge patch → JSON Patch conversion, `whenReady()` on a newly created doc, and whether automerge-repo can refuse a peer's request for an unoffered doc ID. (See [state](state.md#documents), [state](state.md#applying-the-runtime-agents-patches) and [runtime agent](runtime-agent.md#what-the-runtime-agent-sees).)
 
 ### PoC 1: live translation
 
@@ -45,7 +52,7 @@ Answers open questions for PoC 2 and the MVP:
 - The control doc and pointer.
 - Publishing `work/` → `dist/v{n}/`, with the `tsc` gate, `migrate.ts` run in the container and archived, and a commit of `work/` on each publish. Tool: `publish_applet`.
 - A state doc per schema version, and the readiness wait.
-- The real loader with an import map (per Spike 0).
+- The real loader with an import map and React Refresh (see [code versions](code-versions.md#preserving-ui-state-across-activations)).
 - The bootstrap applet becomes the near-blank canvas.
 
 ### MVP

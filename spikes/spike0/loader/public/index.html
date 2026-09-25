@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Spike 0 loader</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "/vendor/react.js",
+          "react/jsx-runtime": "/vendor/jsx-runtime.js",
+          "react-dom/client": "/vendor/react-dom-client.js",
+          "react-refresh/runtime": "/vendor/refresh-runtime.js"
+        }
+      }
+    </script>
+    <style>
+      #bar { font: 13px monospace; background: #eee; padding: 6px; }
+    </style>
+  </head>
+  <body>
+    <div id="bar">
+      mode: <b id="mode"></b> ·
+      <a href="?mode=element">element</a> | <a href="?mode=call">call</a> | <a href="?mode=refresh">refresh</a> ·
+      Alt+1 / Alt+2 activates v1 / v2 without moving focus
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/loader.js"></script>
+  </body>
+</html>

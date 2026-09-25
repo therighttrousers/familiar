@@ -18,3 +18,5 @@ Familiar is a malleable app. It starts as a near-blank canvas with a chat pane, 
 ## Where to look
 
 Design and engineering docs live in [`docs/`](docs/AGENTS.md). Read [`docs/AGENTS.md`](docs/AGENTS.md) before designing or implementing anything.
+
+What's being worked on now is in the roadmap's ["Now" section](docs/designs/roadmap.md#now).

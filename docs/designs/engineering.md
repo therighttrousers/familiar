@@ -17,6 +17,8 @@ A **pnpm workspace**:
 | `bootstrap-applet` | the near-blank starting applet | runtime agent container (`dist/v0/`) |
 | `docker/runtime-agent/` | Dockerfile, preinstalled packages, CLAUDE.md | — |
 
+**Spikes** live in `spikes/<name>/` (e.g. `spikes/spike0/`), outside the workspace, each with its own `package.json` and a README saying how to run it. They are throwaway: committed so findings can be reproduced, and deleted once real code supersedes them. Findings go into the design docs, not the spike.
+
 ## Tooling
 
 TypeScript (strict), **Biome** (lint and format), **Vitest**.

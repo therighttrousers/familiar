@@ -1,0 +1,25 @@
+{
+  "name": "spike0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@automerge/automerge": "^3.5.0",
+    "@automerge/automerge-repo": "2.5.6",
+    "@automerge/automerge-repo-network-messagechannel": "2.5.6",
+    "fast-json-patch": "^3.1.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-refresh": "^0.19.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.6",
+    "@babel/preset-react": "^8.0.1",
+    "@babel/preset-typescript": "^8.0.1",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

@@ -19,7 +19,7 @@ Post-MVP: an **index doc** listing apps, for multiple apps (see [ux](ux.md#sessi
 Who can reach what:
 
 - The **harness UI** is an automerge-repo peer of the harness server and syncs the control doc and state docs.
-- The **applet iframe syncs only the active state doc**, through the parent page (automerge-repo MessageChannel adapter). It holds no credentials. The parent's share policy exposes only that doc; doc IDs are unguessable, and the iframe is told only its own.
+- The **applet iframe syncs only the active state doc**, through the parent page (automerge-repo MessageChannel adapter). It holds no credentials. The parent's repo enforces this with `shareConfig`: `access` grants the iframe's peer only the active state doc, and `announce` announces nothing to it. A request for any other doc comes back "unavailable", even if only the harness server has it. On activation the parent calls `shareConfigChanged()`, which stops the old doc syncing to the iframe. Doc IDs are also unguessable, and the iframe is told only its own. (Checked in Spike 0.)
 - The **loader** gets the pointer read-only from the parent via `postMessage`.
 - Two channels connect the harness UI and the harness server: an **automerge-repo websocket** for doc sync, and a **JSON websocket** for chat and runtime agent events (streaming text, status, publish results).
 - The **runtime agent** never syncs any doc. It reads and writes state through harness RPC tools (see [runtime agent](runtime-agent.md#tools)), and indirectly through the applet code it writes.
@@ -70,15 +70,15 @@ Later: write migrated state as a minimal diff rather than a fresh tree, to keep 
 
 The runtime agent writes **JSON Patch** via `patch_state`, against the state it last saw. The user may have changed things since, e.g. shifting array indices.
 
-- **Design:** the harness records the active state doc's heads each time it delivers state to the runtime agent (a change batch or `get_state`). It applies the runtime agent's patches **at those heads** and lets Automerge merge them forward. The runtime agent never sees heads. (000 §3.4a)
-- **PoC, and fallback** if applying at old heads turns out not to be available: apply patches to the current doc and reject any whose paths don't resolve.
+- **Design:** the harness records the active state doc's heads each time it delivers state to the runtime agent (a change batch or `get_state`). It applies the runtime agent's patches **at those heads** with `DocHandle.changeAt`, and Automerge merges them forward. The runtime agent never sees heads. (000 §3.4a)
+- **PoC:** apply patches to the current doc and reject any whose paths don't resolve.
+- **String `replace` ops go through `A.updateText`**, in both cases. It diffs old and new strings into splices, so the user's concurrent typing in the same string survives. Plain assignment creates a new string object and discards it.
+- A patch to an item the user has deleted since is **silently dropped**, not rejected. Accepted for now.
+
+The harness converts JSON Patch ops into Automerge draft mutations (`add`, `remove`, `replace`; `-` for appending). Spike 0 has a working version (`spikes/spike0/automerge/jsonpatch.ts`).
 
 ## Open questions
 
-- **Automerge APIs to confirm (Spike 0):**
-  - Is `changeAt` the API for applying a change at old heads?
-  - Does `whenReady()` mean "fully synced" for a doc created in one change?
-  - Can automerge-repo **refuse** a peer's request for a doc ID it wasn't offered, not just avoid announcing it? Believed yes in newer versions (separate announce/access policies). Unguessable IDs cover most of the risk either way.
 - **Where the version history lives.** Revert activates "the previous version", but the design doesn't say where the list of versions is recorded. Leaning: in the control doc, next to `active`, e.g. `versions: [{ code, stateDoc, publishedAt, … }]`.
 - **Where chat history lives.** Record 000 puts it in the control doc (later) in §1.4, but makes the event log the source of truth for chat history after a restart in §3.7 (see [engineering](engineering.md#event-log-and-observability)). Pick one.
 - **Attribution by actor ID** was unreliable in the original project, possibly because the runtime agent ran in the same thread as component listeners. Attribution by connection (G8) may make this moot; watch for it.

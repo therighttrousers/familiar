@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "spike0-loader",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["spikes/spike0/loader/serve.mjs"],
+      "port": 5180
+    }
+  ]
+}

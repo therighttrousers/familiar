@@ -2,6 +2,7 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.2, §3.1–3.7, §6.6, §8.4
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.2
 
 The runtime agent is a Claude Code agent running in the runtime agent container. It rewrites the applet, and it acts inside the applet on the user's behalf.
 
@@ -75,7 +76,7 @@ For every input (a change batch, a chat message, or both), the runtime agent has
 
 ## Model
 
-**Opus 5.5 only** for the MVP.
+The model is **configurable**. Testing uses **Sonnet 5**, to save subscription usage (see [security](security.md#credential)). The MVP's demos use **Opus 5.5**. (001 §1.2)
 
 Later: model routing, e.g. a small model chats and uses the applet with the user, and a big model only writes code.
 

@@ -2,6 +2,7 @@
 
 Relevant decision records:
 - [000-initial-design.md](../decision-records/000-initial-design.md): §1.1, §1.3, §1.4, §5.1–5.7
+- [001-poc1-implementation.md](../decision-records/001-poc1-implementation.md): §1.1
 
 ## Trust boundaries
 
@@ -32,7 +33,13 @@ Later: a read-only root filesystem.
 ## Network and egress
 
 - The runtime agent container is only on an **internal Docker network**, with no internet. It can reach only the harness.
-- The harness proxies the Anthropic API and **adds the API key**, so the runtime agent container never holds it.
+- The harness proxies the Anthropic API and **adds the credential**, so the runtime agent container never holds it.
+
+### Credential
+
+The credential is the user's **Claude subscription OAuth token**, minted by `claude setup-token` and read by Claude Code from `CLAUDE_CODE_OAUTH_TOKEN`. In development it lives in a git-ignored `.env` at the repo root. It is the only auth path; API key auth is deferred (see [roadmap](roadmap.md#deferred-post-mvp)). Anthropic doesn't allow claude.ai login to be offered to other users, so anything offered to others needs API key auth (001 §1.1).
+
+In the PoCs the token is in the runtime agent container's env, an accepted gap.
 - The harness reverse-proxies the runtime agent container's static applet server on a separate port. That gives the iframe its own origin.
 
 ### Egress
@@ -61,7 +68,7 @@ The runtime agent shares a filesystem and user with `dist/`, git history and the
 
 ## Prompt injection
 
-**Deferred for the MVP.** There's a single user, so the only injector is the user. The runtime agent has nowhere to exfiltrate to: no network, and no key. In place already:
+**Deferred for the MVP.** There's a single user, so the only injector is the user. The runtime agent has nowhere to exfiltrate to: no network, and no credential. In place already:
 
 - User content in `<applet-changes>` is framed as data (see [runtime agent](runtime-agent.md#message-encoding)).
 - Chat lives in the harness UI, so it's the one channel where "the user said this" is certain (see [ux](ux.md#chat)).
@@ -71,3 +78,4 @@ Revisit when either of these lands: applet network access, npm egress.
 ## Open questions
 
 - **Is chat more authoritative than in-applet text?** In the original project, text typed into applet text boxes and addressed to the runtime agent was treated like chat, and that worked well. Revisit with prompt injection.
+- **Can the Anthropic API proxy inject a subscription OAuth token?** With an API key, the proxy adds one header. Claude Code sends an OAuth token as `Authorization: Bearer`, possibly with other OAuth-specific headers, and refreshes it. Check what the proxy must add and whether Claude Code needs to believe it holds an OAuth credential (e.g. a placeholder token) for the request shape to be right.

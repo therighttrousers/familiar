@@ -10,7 +10,7 @@ A **pnpm workspace**:
 | Package | Contents | Runs in |
 |---|---|---|
 | `protocol` | shared types for the RPC and event log | everywhere |
-| `harness` | server, automerge-repo, event log, API key proxy | host (PoCs), harness container (MVP) |
+| `harness` | server, automerge-repo, event log, Anthropic API proxy | host (PoCs), harness container (MVP) |
 | `harness-ui` | chat, toolbar, iframe host (trusted, so Vite is fine here) | browser |
 | `runner` | Agent SDK driver and runtime tools | runtime agent container |
 | `applet-runtime` | the loader and `@harness/state` (copied in read-only) | applet iframe |
@@ -52,7 +52,8 @@ Alongside it: Claude Code's own transcripts on the runtime agent container's vol
 ## Cost controls
 
 - A running cost counter in the harness UI, from the cost the SDK reports at the end of each turn.
-- A monthly spend limit in the Anthropic Console as the backstop.
+- Under the subscription credential (see [security](security.md#credential)), that cost is an estimate, and the plan's usage limits are the backstop. They're shared with the user's other Claude use.
+- A cheaper model for testing (see [runtime agent](runtime-agent.md#model)).
 - Turn or budget limits only if we see runaway turns.
 
 ## Open questions

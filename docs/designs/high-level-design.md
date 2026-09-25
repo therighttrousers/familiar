@@ -70,14 +70,14 @@ Goals settle recurring questions by default; a specific decision can override on
 | [state.md](state.md) | Automerge documents and the pointer, schema changes and migration, the in-applet `store` API, what goes in Automerge vs. React state, applying the runtime agent's patches |
 | [code-versions.md](code-versions.md) | Immutable built versions, the publish pipeline and validation gate, the loader, rollback, conventions for applet code |
 | [runtime-agent.md](runtime-agent.md) | The runner, tools, what the runtime agent sees (deltas, batching, encoding), concurrency, response options, model, runtime instructions |
-| [security.md](security.md) | Trust boundaries, container hardening, the API key, the applet iframe sandbox, egress, prompt injection |
+| [security.md](security.md) | Trust boundaries, container hardening, the credential, the applet iframe sandbox, egress, prompt injection |
 | [ux.md](ux.md) | Layout, activity feedback, consent for rewrites, undo, sessions, where chat lives |
 | [engineering.md](engineering.md) | Repo layout, tooling, the event log and observability, cost controls |
 | [roadmap.md](roadmap.md) | Milestones (Spike 0, PoC 1, PoC 2, MVP), scope, deferred work, deployment contexts |
 
 ## Architecture overview
 
-MVP shape. In the PoCs the harness runs on the host, the runtime agent container has a normal network with the API key in its env, and the browser loads the applet straight from the container (see [roadmap](roadmap.md)).
+MVP shape. In the PoCs the harness runs on the host, the runtime agent container has a normal network with the subscription OAuth token in its env, and the browser loads the applet straight from the container (see [roadmap](roadmap.md)).
 
 ```mermaid
 flowchart LR
@@ -90,7 +90,7 @@ flowchart LR
   end
   subgraph HC["harness container (trusted)"]
     HS["Harness server<br/>automerge-repo + storage<br/>per-session objects<br/>batching, encoding, JSONL log"]
-    KP["Anthropic API proxy<br/>(adds key)"]
+    KP["Anthropic API proxy<br/>(adds credential)"]
     RP["Reverse proxy<br/>(applet origin)"]
   end
   subgraph AC["runtime agent container (untrusted, internal network only)"]

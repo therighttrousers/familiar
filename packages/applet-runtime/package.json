@@ -1,0 +1,26 @@
+{
+  "name": "applet-runtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@automerge/automerge": "3.5.0",
+    "@automerge/automerge-repo": "2.5.6",
+    "@automerge/automerge-repo-network-messagechannel": "2.5.6",
+    "@tailwindcss/vite": "4.3.3",
+    "protocol": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "vite": "^8.3.0",
+    "vite-plugin-wasm": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}
